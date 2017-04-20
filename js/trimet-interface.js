@@ -1,12 +1,16 @@
 var trimetKey = require("./../.env").trimetKey;
 var googleMapKey = require("./../.env").googleMapKey;
-// <script async defer src='https://maps.googleapis.com/maps/api/js?key=AIzaSyD-9gxmm_lwAob-yiYLqBuOLJ0tU_PxXYk&callback=initMap'></script>
+// <script async defer ></script>
 var Map = require("./../js/map.js").mapModule;
 
 $(function(){
-  $("#googleAPIScript").html("<script async defer src='https://maps.googleapis.com/maps/api/js?key="+googleMapKey+"&callback=initMap'></script>");
-  var newMap = new Map({lat: -25.363, lng: 131.044});
-  newMap.initMap();
+  var cord = {lat: 45, lng: -122};
+
+  var newMap = new Map (cord);
+  $.getScript('https://maps.googleapis.com/maps/api/js?key=' + googleMapKey, function(){
+    newMap.initMap();
+  });
+
   $("#trainSelected").change(function() {
     // if the option is green then add green line stops..
 
@@ -180,6 +184,11 @@ $(function(){
         console.log("longitude--"+ trainLong);
         $("#lat").html(trainLat);
         $("#long").html(trainLong);
+        cord = {lat: trainLat, lng: trainLong};
+        newMap = new Map (cord);
+        newMap.initMap();
+
+
       })
       .fail(function(error) {
         console.log(error);
