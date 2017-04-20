@@ -2,13 +2,12 @@ var trimetKey = require("./../.env").trimetKey;
 var googleMapKey = require("./../.env").googleMapKey;
 // <script async defer ></script>
 var Map = require("./../js/map.js").mapModule;
-
+var map;
 $(function(){
   var cord = {lat: 45, lng: -122};
 
   var newMap = new Map (cord);
-  $.getScript('https://maps.googleapis.com/maps/api/js?key=' + googleMapKey, function(){
-    newMap.initMap();
+  $.getScript('https://maps.googleapis.com/maps/api/js?key=' + googleMapKey, function(){newMap.initMap();
   });
 
   $("#trainSelected").change(function() {
@@ -165,29 +164,36 @@ $(function(){
     $.get("https://developer.trimet.org/ws/v2/arrivals?locIDs=" + trainStop + "&json=true&appID="+trimetKey)
     .then(function(response){
       console.log("i am the first call.");
-      console.log(response);
-      var trainFullSign = response.resultSet.arrival[0].fullSign;
-      var estimatedTime = response.resultSet.arrival[0].estimated;
-      var scheduledTime = response.resultSet.arrival[0].scheduled;
-      var scheduledDate = new Date(0);
-      scheduledDate.setUTCMilliseconds(scheduledTime);
-      var arrivalTime = scheduledDate.toLocaleTimeString();
       $.get("https://developer.trimet.org/ws/v2/vehicles?ids="+response.resultSet.arrival[0].vehicleID+"&json=true&appID="+trimetKey)
       .then(function(responseNext){
         console.log("i am the second call.");
         console.log("Vehicle Id from second call--"+responseNext.resultSet.vehicle[0].vehicleID );
-        console.log("Next Stop from second call--"+responseNext.resultSet.vehicle[0].nextLocID );
-        console.log("Original stop selected--" + trainStop);
+
         trainLat = responseNext.resultSet.vehicle[0].latitude;
         trainLong = responseNext.resultSet.vehicle[0].longitude;
-        console.log("latitude--"+ trainLat);
-        console.log("longitude--"+ trainLong);
-        $("#lat").html(trainLat);
-        $("#long").html(trainLong);
-        cord = {lat: trainLat, lng: trainLong};
-        newMap = new Map (cord);
-        newMap.initMap();
 
+        cord = {lat: trainLat, lng: trainLong};
+        newMap.updateMap(cord);
+    var count=0;
+        updateTrainInterval = setInterval(function() {
+      // Do something every 9 seconds
+
+          $.get("https://developer.trimet.org/ws/v2/vehicles?ids="+response.resultSet.arrival[0].vehicleID+"&json=true&appID="+trimetKey)
+            .then(function(responseNext){
+              console.log("tracking call");
+              console.log("tracking call Train ID--------"+responseNext.resultSet.vehicle[0].vehicleID );
+              console.log("lat: " + trainLat);
+              trainLat = responseNext.resultSet.vehicle[0].latitude;
+              trainLong = responseNext.resultSet.vehicle[0].longitude;
+
+              cord = {lat: trainLat, lng: trainLong};
+              newMap.updateMap(cord);
+            });
+            console.log(count++);
+            $("#trainStopSelected").change(function() {
+              clearInterval(updateTrainInterval);
+            });
+        }, 9000);
 
       })
       .fail(function(error) {
